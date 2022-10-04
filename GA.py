@@ -35,7 +35,7 @@ input = [
 # STOP
 
 def compute_fitness(fitness, chromosomes):
-    fitness = np.zeros(pop_size)
+    fitness = np.zeros(len(chromosomes))
     for i in range(len(chromosomes)):
         for gene in range(len_of_gene):
             fitness[i] += input[gene][chromosomes[i][gene]]
@@ -133,7 +133,8 @@ print("parents")
 print(parents)
 offspring = crossover(parent_ids , offspring_size = [int(pop_size*0.2), len_of_gene])
 offspring = inversion_mutation(offspring, offspring_size = [int(pop_size*0.2), len_of_gene])
-
+chromosomes = np.asarray(chromosomes + offspring)
+print(np.shape(chromosomes))
 # for generation in (num_generation):
 
 #     # selection
