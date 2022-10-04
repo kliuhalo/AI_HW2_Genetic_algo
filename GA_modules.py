@@ -14,8 +14,10 @@ class GA_algorithm:
         pass
 
     def perform_crossover(parents, offspring_size):
+        # calculate fitness at the meanwhile
         pass
 
     def perform_mutation(offspring_crossover):
+        
         pass
 
