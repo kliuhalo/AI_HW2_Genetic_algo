@@ -1,6 +1,7 @@
 import numpy as np
 import os, sys
 import random
+import json
 
 class Problem:
     def __init__(self, input):
@@ -13,7 +14,7 @@ class Problem:
         self.mutation_rate = 0.6
         self.pop_size = len(self.input)
         self.len_of_gene = len(self.input)
-        self.num_generation = 20
+        self.num_generation = 15
 
         self.chromosomes = None
         self.offspring = None
@@ -82,33 +83,7 @@ class Problem:
         self.offspring = offspring_mutation
         return self.offspring
 
-
-
-if __name__ == '__main__':
-    
-    # input = [
-    # [10, 20, 23,  4],
-    # [15, 13,  6, 25],
-    # [ 2, 22, 53, 34],
-    # [12,  3, 14, 17]
-    # ]
-    input = [[0.43045255, 0.78681387, 0.07514408, 0.72583933, 0.52916145, 0.87483212, 0.34701621],
-    [0.68704291, 0.45392742, 0.46862110, 0.67669006, 0.23817468, 0.87520581, 0.67311418],
-    [0.38505150, 0.05974168, 0.11388629, 0.28978058, 0.66089373, 0.92592403, 0.70718757],
-    [0.24975701, 0.16937649, 0.42003672, 0.88231235, 0.74635725, 0.59854858, 0.88631100],
-    [0.64895582, 0.58909596, 0.99772334, 0.85522575, 0.33916707, 0.72873479, 0.26826203],
-    [0.47939038, 0.88484586, 0.05122520, 0.83527995, 0.37219939, 0.20375257, 0.50482283],
-    [0.58926554, 0.45176739, 0.25217475, 0.83548120, 0.41687026, 0.00293049, 0.23939052]]
-    # START
-    # Generate the initial population
-    # Compute fitness
-    # REPEAT
-    #     Selection
-    #     Crossover
-    #     Mutation
-    #     Compute fitness
-    # UNTIL population has converged
-    # STOP
+def GA(input):
     solver = Problem(input)
     # initialize
     #selected_chromosomes = np.zeros((pop_size, solver.len_of_gene))
@@ -123,6 +98,7 @@ if __name__ == '__main__':
     best_fitness = 0
 
     fitness, best_index = solver.compute_fitness()#solver.chromosomes)
+    print("input", input)
     for generation in range(solver.num_generation):
         # selection
         parent_ids = solver.roulette_wheel_selection(fitness)
@@ -144,3 +120,41 @@ if __name__ == '__main__':
 
     # print('Assignment:', solver.chromosomes[best_index]) 
     # print('Cost:', solver.cost(solver.chromosomes[best_index]))
+
+
+if __name__ == '__main__':
+    with open('input.json', 'r') as inputFile:
+        data = json.load(inputFile)
+        for key in data:
+            input = data[key]
+            
+            # START
+            # Generate the initial population
+            # Compute fitness
+            # REPEAT
+            #     Selection
+            #     Crossover
+            #     Mutation
+            #     Compute fitness
+            # UNTIL population has converged
+            # STOP
+            #GA(input)
+    # input = [
+    #         [10, 20, 23,  4],
+    #         [15, 13,  6, 25],
+    #         [ 2, 22, 53, 34],
+    #         [12,  3, 14, 17]
+    #         ] 
+    # input = [[0.43045255, 0.78681387, 0.07514408, 0.72583933, 0.52916145, 0.87483212, 0.34701621],
+    # [0.68704291, 0.45392742, 0.46862110, 0.67669006, 0.23817468, 0.87520581, 0.67311418],
+    # [0.38505150, 0.05974168, 0.11388629, 0.28978058, 0.66089373, 0.92592403, 0.70718757],
+    # [0.24975701, 0.16937649, 0.42003672, 0.88231235, 0.74635725, 0.59854858, 0.88631100],
+    # [0.64895582, 0.58909596, 0.99772334, 0.85522575, 0.33916707, 0.72873479, 0.26826203],
+    # [0.47939038, 0.88484586, 0.05122520, 0.83527995, 0.37219939, 0.20375257, 0.50482283],
+    # [0.58926554, 0.45176739, 0.25217475, 0.83548120, 0.41687026, 0.00293049, 0.23939052]]
+    input = [[0.71773280, 0.28980792, 0.86571783, 0.44026587, 0.53155829],
+    [0.30556295, 0.56751479, 0.75442822, 0.62446877, 0.30992529],
+    [0.83717620, 0.52213939, 0.54137934, 0.15001555, 0.70178034],
+    [0.53279199, 0.08006661, 0.70693305, 0.29315974, 0.69018493],
+    [0.03981310, 0.25511235, 0.94795653, 0.41611858, 0.50587076]]
+    GA(input)
