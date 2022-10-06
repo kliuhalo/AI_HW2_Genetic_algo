@@ -27,9 +27,9 @@ class Problem:
         return totalTime
 
     def compute_fitness(self, chroms):
-        #fitness = np.zeros(len(self.chromosomes))
         #fitness = np.zeros(len(chroms))
         fitness = [0]*len(chroms)
+        correct_fitness = [0]*len(chroms)
         best_result = sys.maxsize
         #for i in range(len(self.chromosomes)):
         for i in range(len(chroms)):
@@ -38,25 +38,25 @@ class Problem:
             if fitness[i] < best_result :
                 best_index = i
                 best_result = fitness[i]
+        #min_obj_fitness = min(fitness)
+        max_obj_fitness = max(fitness)
+        #range_obj_fitness = max_obj_fitness - min_obj_fitness
+        for i, obj in enumerate(fitness):
+            correct_fitness[i] = max_obj_fitness - fitness[i] + pow(10, -5)
+        print("fitness", fitness)
+        print("correct fitness", correct_fitness)
         rank = list(range(len(fitness)))#np.zeros(len(chroms))
-        rank.sort(key=lambda x:fitness[x]) 
+        rank.sort(key=lambda x:correct_fitness[x]) 
         out_rank = [0]*len(rank)
         for i, x in enumerate(rank):
             out_rank[x] = i
-        # fitness = np.uint8(fitness)
-        #print("fitness", fitness)
-        return fitness, out_rank, best_index
+        return correct_fitness, out_rank, best_index
 
     def roulette_wheel_selection(self, fitness):
         indexs = np.arange(len(fitness))
         total_fitness = np.sum(fitness, axis=0)
-        #print("total fitness", total_fitness)
-        chrom_probs = [1 -(fit / total_fitness) for fit in fitness]
-        #print("chrom probs", chrom_probs)
-        total_fitness = np.sum(chrom_probs, axis=0)
-        chrom_probs =[(prob/total_fitness) for prob in chrom_probs]
-        #print(chrom_probs)
-        #print(len(chrom_probs),len(indexs))
+        chrom_probs = [fit/total_fitness for fit in fitness]
+        
         select = np.random.choice(indexs, self.num_parents_mating, p=chrom_probs)
         #print("select",select)
         return select
@@ -135,8 +135,6 @@ class Problem:
 def GA(input):
     solver = Problem(input)
     # initialize
-    #selected_chromosomes = np.zeros((pop_size, solver.len_of_gene))
-    
     solver.chromosomes = np.zeros((solver.pop_size, solver.len_of_gene), dtype = int)
     for i in range(solver.pop_size):
         for j in range(solver.len_of_gene):  
@@ -147,16 +145,12 @@ def GA(input):
     best_fitness = 0
 
     fitness, _, best_index = solver.compute_fitness(solver.chromosomes)
-    #print("input", input)
-    #print("fitness", fitness)
+
     for generation in range(solver.num_generation):
-        # traditional selection
+        # Elitism Selection * roulette_wheel_selection
         parent_ids = solver.roulette_wheel_selection(fitness) # 30 * 0.6
         parents = np.uint8([solver.chromosomes[id] for id in parent_ids])
         
-        # Elitism Selection
-
-
         # crossover & mutation
         solver.offspring = None
         solver.offspring = solver.order_crossover(parent_ids , offspring_size = [int(solver.pop_size), solver.len_of_gene])
@@ -166,14 +160,12 @@ def GA(input):
         #print("Inversion mutation offspring", solver.offspring)
         #print("2",solver.offspring)
         # next generation's population
-        
         solver.new_population()
         # fitness
         fitness, _ , best_index = solver.compute_fitness(solver.chromosomes)
         print("generation", generation)
-        print("pop size", solver.pop_size)
-        print('Assignment:',solver.chromosomes[best_index])
-        print('Cost',fitness[best_index])
+    print('Assignment:',solver.chromosomes[best_index])
+    print('Cost',fitness[best_index])
 
     # print('Assignment:', solver.chromosomes[best_index]) 
     # print('Cost:', solver.cost(solver.chromosomes[best_index]))
@@ -184,39 +176,5 @@ if __name__ == '__main__':
         data = json.load(inputFile)
         for key in data:
             input = data[key]
-            
-            # START
-            # Generate the initial population
-            # Compute fitness
-            # REPEAT
-            #     Selection
-            #     Crossover
-            #     Mutation
-            #     Compute fitness
-            # UNTIL population has converged
-            # STOP
-            #GA(input)
-    # input = [
-    #         [10, 20, 23,  4],
-    #         [15, 13,  6, 25],
-    #         [ 2, 22, 53, 34],
-    #         [12,  3, 14, 17]
-    #         ] 
-    input = [[0.43045255, 0.78681387, 0.07514408, 0.72583933, 0.52916145, 0.87483212, 0.34701621],
-    [0.68704291, 0.45392742, 0.46862110, 0.67669006, 0.23817468, 0.87520581, 0.67311418],
-    [0.38505150, 0.05974168, 0.11388629, 0.28978058, 0.66089373, 0.92592403, 0.70718757],
-    [0.24975701, 0.16937649, 0.42003672, 0.88231235, 0.74635725, 0.59854858, 0.88631100],
-    [0.64895582, 0.58909596, 0.99772334, 0.85522575, 0.33916707, 0.72873479, 0.26826203],
-    [0.47939038, 0.88484586, 0.05122520, 0.83527995, 0.37219939, 0.20375257, 0.50482283],
-    [0.58926554, 0.45176739, 0.25217475, 0.83548120, 0.41687026, 0.00293049, 0.23939052]]
-    input = [[0.71773280, 0.28980792, 0.86571783, 0.44026587, 0.53155829],
-    [0.30556295, 0.56751479, 0.75442822, 0.62446877, 0.30992529],
-    [0.83717620, 0.52213939, 0.54137934, 0.15001555, 0.70178034],
-    [0.53279199, 0.08006661, 0.70693305, 0.29315974, 0.69018493],
-    [0.03981310, 0.25511235, 0.94795653, 0.41611858, 0.50587076]]
-    # input =[[10, 20, 23, 4],
-    # [15, 13, 6, 25],
-    # [ 2, 22, 35, 34],
-    # [12, 3, 14, 17]]
 
-    GA(input)
+            GA(input)
