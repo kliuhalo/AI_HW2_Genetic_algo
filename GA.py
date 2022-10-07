@@ -2,25 +2,28 @@ import numpy as np
 import os, sys
 import random
 import json
+import time
 
 class Problem:
     def __init__(self, input):
         self.input = input
         self.numTasks = len(input)
 
+        self.test_iter = 1000
+
         # 變數
         self.mating_rate = 0.6
         self.num_parents_mating = int(len(self.input) * self.mating_rate)
         self.mutation_rate = 0.6
-        self.pop_size = len(self.input)
+        self.pop_size = 5
         self.len_of_gene = len(self.input)
-        self.num_generation = 15
+        self.num_generation = 10
 
         self.chromosomes = None
         self.offspring = None
 
     def cost(self, ans):
-        print("ans", ans)
+        #print("ans", ans)
         totalTime = 0
         for task, agent in enumerate(ans):
             totalTime += self.input[task][agent]
@@ -43,8 +46,8 @@ class Problem:
         #range_obj_fitness = max_obj_fitness - min_obj_fitness
         for i, obj in enumerate(fitness):
             correct_fitness[i] = max_obj_fitness - fitness[i] + pow(10, -5)
-        print("fitness", fitness)
-        print("correct fitness", correct_fitness)
+        # print("fitness", fitness)
+        # print("correct fitness", correct_fitness)
         rank = list(range(len(fitness)))#np.zeros(len(chroms))
         rank.sort(key=lambda x:correct_fitness[x]) 
         out_rank = [0]*len(rank)
@@ -94,6 +97,7 @@ class Problem:
                     cnt += 1
             now+=1
         self.offspring = np.uint(self.offspring)
+        
         return self.offspring
 
     def inversion_mutation(self, offspring_crossover, offspring_size):
@@ -121,15 +125,16 @@ class Problem:
         # print(rank1, rank2)
         new_population = np.empty((len(self.chromosomes), len(self.chromosomes[0])))
         for i in range(int(len(self.chromosomes)/2)):
-            # print(rank2[rank2.index(i)])
-            # print("findfind",self.chromosomes[rank2[rank2.index(i)]])
+            #print(rank2[rank2.index(i)])
+            #print("findfind",self.chromosomes[rank2[rank2.index(i)]])
             new_population[i] = self.chromosomes[rank2[rank2.index(i)]]
 
         length2 = int(len(self.chromosomes)) - int(len(self.chromosomes)/2)
         for i in range(length2):
             new_population[i+int(len(self.chromosomes)/2)] = self.offspring[rank1[rank1.index(i)]]
+            #print("findfindfind",new_population[i+int(len(self.chromosomes)/2)] )
         self.chromosomes = np.uint8(new_population)
-        #print("new population",self.chromosomes)
+        #print("new population", self.chromosomes)
         return new_population
 
 def GA(input):
@@ -142,39 +147,81 @@ def GA(input):
         np.random.shuffle(solver.chromosomes[i])
     
     #best_chromosome = np.zeros(solver.len_of_gene)
-    best_fitness = 0
+    best_fitness = -100
+    best_cost = sys.maxsize
+    best_chromosome = None
 
     fitness, _, best_index = solver.compute_fitness(solver.chromosomes)
+    solver.test_iter = 100
+    avg_cost = 0
+    avg_time = 0
+    for test in range(solver.test_iter):
+        start = time.time()
+        for generation in range(solver.num_generation):
+            # Elitism Selection * roulette_wheel_selection
+            parent_ids = solver.roulette_wheel_selection(fitness) # 30 * 0.6
+            parents = np.uint8([solver.chromosomes[id] for id in parent_ids])
+            
+            # crossover & mutation
+            solver.offspring = None
+            solver.offspring = solver.order_crossover(parent_ids , offspring_size = [int(solver.pop_size), solver.len_of_gene])
+            #print("Order crossover offspring", solver.offspring)
+            #print("1",solver.offspring)
+            solver.offspring = solver.inversion_mutation(solver.offspring, offspring_size = [int(solver.pop_size), solver.len_of_gene])
+            #print("Inversion mutation offspring", solver.offspring)
+            #print("2",solver.offspring)
+            # next generation's population
+            solver.new_population()
+            # fitness
 
-    for generation in range(solver.num_generation):
-        # Elitism Selection * roulette_wheel_selection
-        parent_ids = solver.roulette_wheel_selection(fitness) # 30 * 0.6
-        parents = np.uint8([solver.chromosomes[id] for id in parent_ids])
+            fitness, _ , best_index = solver.compute_fitness(solver.chromosomes)
+            #print("fitness, ", fitness,fitness[best_index])
+            if fitness[best_index] > float(best_fitness):
+                best_fitness = fitness[best_index]
+                best_chromosome = solver.chromosomes[best_index]
+            #print("generation", generation)
+            if solver.cost(solver.chromosomes[best_index]) < best_cost:
+                best_cost = solver.cost(solver.chromosomes[best_index])
+                best_chromosome = solver.chromosomes[best_index]
+        end = time.time()
+        #print("Assignment", best_chromosome)
         
-        # crossover & mutation
-        solver.offspring = None
-        solver.offspring = solver.order_crossover(parent_ids , offspring_size = [int(solver.pop_size), solver.len_of_gene])
-        #print("Order crossover offspring", solver.offspring)
-        #print("1",solver.offspring)
-        solver.offspring = solver.inversion_mutation(solver.offspring, offspring_size = [int(solver.pop_size), solver.len_of_gene])
-        #print("Inversion mutation offspring", solver.offspring)
-        #print("2",solver.offspring)
-        # next generation's population
-        solver.new_population()
-        # fitness
-        fitness, _ , best_index = solver.compute_fitness(solver.chromosomes)
-        print("generation", generation)
-    print('Assignment:',solver.chromosomes[best_index])
-    print('Cost',fitness[best_index])
+        gen_time = end - start
+        avg_time += gen_time
+        avg_cost += best_cost
+    if best_cost<1.5:
+        print("correct")
+    #print("After all generation, the best cost is ",best_cost)
+    print("average cost:", avg_cost/solver.test_iter)
+    print("average time:", avg_time/solver.test_iter)
 
     # print('Assignment:', solver.chromosomes[best_index]) 
-    # print('Cost:', solver.cost(solver.chromosomes[best_index]))
+    #print('Cost:', solver.cost(solver.chromosomes[best_index]))
 
 
 if __name__ == '__main__':
-    with open('input.json', 'r') as inputFile:
-        data = json.load(inputFile)
-        for key in data:
-            input = data[key]
-
-            GA(input)
+    start = time.time()
+    # with open('input.json', 'r') as inputFile:
+    #     data = json.load(inputFile)
+    #     for key in data:
+    #         input = data[key]
+    #         input = [
+    #         [10, 20, 23,  4],
+    #         [15, 13,  6, 25],
+    #         [ 2, 22, 53, 34],
+    #         [12,  3, 14, 17]
+    #         ]
+    #         GA(input)
+    input = [
+    [10, 20, 23,  4],
+    [15, 13,  6, 25],
+    [ 2, 22, 53, 34],
+    [12,  3, 14, 17]
+    ]
+    input = [
+    [0.26300727684204517, 0.48513471953446996, 0.8491417036699047], 
+    [0.7518785807425733, 0.029752222747783996, 0.5887209536993653], 
+    [0.7761974553100254, 0.19546118308946114, 0.6158427400193519]
+    ]
+    GA(input)
+    
